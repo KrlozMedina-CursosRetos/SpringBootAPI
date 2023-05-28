@@ -99,3 +99,93 @@ http://localhost:3000 sería la dirección de la aplicación Front-end y
 .allowedMethods los métodos que se permitirán ejecutar. Con esto, podrás
 consumir tu API sin problemas desde una aplicación front-end.
 
+### DTO (record)
+
+Lanzado oficialmente en Java 16, pero disponible experimentalmente desde
+Java 14. Record es un recurso que le permite representar una clase
+inmutable, que contiene solo atributos, constructor y métodos de lectura,
+de una manera muy simple y ágil.
+
+Este tipo de clase encaja perfectamente para representar clases DTO, ya que
+su objetivo es únicamente representar datos que serán recibidos o devueltos
+por la API, sin ningún tipo de comportamiento.
+
+Para crear una clase DTO inmutable, sin la utilización de Record, era
+necesario escribir mucho código. Veamos un ejemplo de una clase DTO que
+representa un teléfono:
+
+```java
+public final class Telefono {
+
+    private final String ddd;
+    private final String numero;
+
+    public Telefono(String ddd, String numero) {
+        this.ddd = ddd;
+        this.numero = numero;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(ddd, numero);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (!(obj instanceof Telefono)) {
+            return false;
+        } else {
+            Telefono other = (Telefono) obj;
+            return Objects.equals(ddd, other.ddd)
+              && Objects.equals(numero, other.numero);
+        }
+    }
+
+    public String getDdd() {
+        return this.ddd;
+    }
+
+    public String getNumero() {
+        return this.numero;
+    }
+}
+```
+
+Ahora, con Record todo ese código se puede resumir en una sola línea:
+
+```java
+public record Telefono(String ddd, String numero){}
+```
+
+Deberá crear una clase Controller:
+
+```java
+@RestController
+@RequestMapping("pacientes")
+public class PacienteController {
+
+    @PostMapping
+    public void registrar(@RequestBody DatosRegistroPaciente datos) {
+        System.out.println("datos recebidos: " +datos);
+    }
+
+}
+```
+
+También deberá crear un DTO:
+
+```java
+public record DatosRegistroPaciente(
+        String nombre,
+        String email,
+        String telefono,
+        String documentoIdentidad,
+        DatosDireccion direccion
+) {
+}
+```
+
+El DTO ```DatosDireccion``` será el mismo utilizado en la funcionalidad de
+registro de médicos.
