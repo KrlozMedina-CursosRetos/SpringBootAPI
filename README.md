@@ -382,3 +382,86 @@ en nuestro proyecto, para los más diversos tipos de atributos. Puede
 consultar una lista de las principales anotaciones de Bean Validation en 
 la [documentación oficial](https://jakarta.ee/specifications/bean-validation/3.0/jakarta-bean-validation-spec-3.0.html#builtinconstraints)
 de la especificación.
+
+## Session 4
+
+### Uso de la anotación ```@JsonIgnore```
+
+En esta situación, podríamos usar la anotación @JsonIgnore, que nos ayuda 
+a ignorar ciertas propiedades de una clase Java cuando se serializa en un 
+objeto JSON.
+
+Su uso consiste en agregar la anotación a los atributos que queremos 
+ignorar cuando se genera el JSON. Por ejemplo, supongamos que tenemos 
+una entidad JPA 'Empleado', en la que queremos ignorar el atributo 'salario':
+
+```java
+@Getter
+@NoArgsConstructor
+@EqualsAndHashCode(of = "id")
+@Entity(name = "Empleado")
+@Table(name = "empleados")
+public class Empleado {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String nombre;
+    private String email;
+
+    @JsonIgnore
+    private BigDecimal salario;
+
+    //restante del código omitido…
+}
+```
+
+En el ejemplo anterior, el atributo 'salario' de la clase 'Empleado' no se 
+mostrará en las respuestas JSON y el problema estaría resuelto.
+
+Sin embargo, puede haber algún otro endpoint de la API en el que 
+necesitemos enviar el salario de los empleados en el JSON, en cuyo caso 
+tendríamos problemas, ya que con la anotación ```@JsonIgnore``` tal atributo 
+nunca se enviará en el JSON, y al eliminar la anotación se enviará el 
+atributo siempre. Por lo tanto, perdemos la flexibilidad de controlar 
+cuándo se deben enviar ciertos atributos en el JSON y cuándo no.
+
+### DTO
+
+El patrón DTO (Data Transfer Object) es un patrón arquitectónico que se
+usó ampliamente en aplicaciones Java distribuidas (arquitectura 
+cliente/servidor) para representar los datos que eran enviados y 
+recibidos entre aplicaciones cliente y servidor.
+
+El patrón DTO puede (y debe) usarse cuando no queremos exponer todos los 
+atributos de alguna entidad en nuestro proyecto, una situación similar a 
+los salarios de los empleados que discutimos anteriormente. Además, con la 
+flexibilidad y la opción de filtrar qué datos se transmiten, podemos 
+ahorrar tiempo de procesamiento.
+
+### Para saber más: parámetros de paginación
+
+Como aprendimos en videos anteriores, por defecto, los parámetros 
+utilizados para realizar la paginación y el ordenamiento deben llamarse 
+```page```, ```size``` y ```sort```. Sin embargo, Spring Boot permite modificar los 
+nombres de dichos parámetros a través de la configuración en el archivo 
+```application.properties```.
+
+Por ejemplo, podríamos traducir al español los nombres de estos parámetros 
+con las siguientes propiedades:
+
+```springdataql
+spring.data.web.pageable.page-parameter=pagina
+spring.data.web.pageable.size-parameter=tamano
+spring.data.web.sort.sort-parameter=orden
+```
+
+Por lo tanto, en solicitudes que usen paginación, debemos usar estos 
+nombres que fueron definidos. Por ejemplo, para listar los médicos de 
+nuestra API trayendo solo 5 registros de la página 2, ordenados por email 
+y en orden descendente, la URL de solicitud debe ser:
+
+```springdataql
+http://localhost:8080/medicos?tamano=5&pagina=1&orden=email,desc
+```
+
