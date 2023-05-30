@@ -17,15 +17,15 @@ public class PacienteController {
     @Autowired
     private PacienteRepository repository;
 
-    @PostMapping
-    @Transactional
-    public ResponseEntity registrar(@RequestBody @Valid DatosRegistroPaciente datos, UriComponentsBuilder uriBuilder) {
-        var paciente = new Paciente(datos);
-        repository.save(paciente);
-
-        var uri = uriBuilder.path("/pacientes/{id}").buildAndExpand(paciente.getId()).toUri();
-        return ResponseEntity.created(uri).body(new DatosDetalladoPaciente(paciente));
-    }
+//    @PostMapping
+//    @Transactional
+//    public ResponseEntity registrar(@RequestBody @Valid DatosRegistroPaciente datos, UriComponentsBuilder uriBuilder) {
+//        var paciente = new Paciente(datos);
+//        repository.save(paciente);
+//
+//        var uri = uriBuilder.path("/pacientes/{id}").buildAndExpand(paciente.getId()).toUri();
+//        return ResponseEntity.created(uri).body(new DatosDetalladoPaciente(paciente));
+//    }
 
 //    @GetMapping
 //    public ResponseEntity<Page<DatosListaPaciente>> listar(@PageableDefault(size = 10, sort = {"nombre"}) Pageable paginacion) {
@@ -33,14 +33,14 @@ public class PacienteController {
 ////        return ResponseEntity.ok(page);
 //    }
 
-    @PutMapping
-    @Transactional
-    public ResponseEntity actualizar(@RequestBody @Valid DatosActualizacionPaciente datos) {
-        var paciente = repository.getReferenceById(datos.id());
-//        paciente.actualizarInformacion(datos);
-
-        return ResponseEntity.ok(new DatosDetalladoPaciente(paciente));
-    }
+//    @PutMapping
+//    @Transactional
+//    public ResponseEntity actualizar(@RequestBody @Valid DatosActualizacionPaciente datos) {
+//        var paciente = repository.getReferenceById(datos.id());
+////        paciente.actualizarInformacion(datos);
+//
+//        return ResponseEntity.ok(new DatosDetalladoPaciente(paciente));
+//    }
 
     @DeleteMapping("/{id}")
     @Transactional
@@ -51,9 +51,9 @@ public class PacienteController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity detallar(@PathVariable Long id) {
-        var paciente = repository.getReferenceById(id);
-        return ResponseEntity.ok(new DatosDetalladoPaciente(paciente));
-    }
+//    @GetMapping("/{id}")
+//    public ResponseEntity detallar(@PathVariable Long id) {
+//        var paciente = repository.getReferenceById(id);
+//        return ResponseEntity.ok(new DatosDetalladoPaciente(paciente));
+//    }
 }
