@@ -611,3 +611,25 @@ existentes.
 Para conocer más detalles y comprender mejor cómo ensamblar consultas 
 dinámicas con Spring Data, acceda a su [documentación oficial](https://docs.spring.io/spring-data/jpa/docs/current/reference/html/).
 
+### Para saber más: otra información sobre el Token
+
+Además del Issuer, Subject y fecha de expiración, podemos incluir otra 
+información en el token JWT, según las necesidades de la aplicación. Por 
+ejemplo, podemos incluir el id del usuario en el token, simplemente usando
+el método ```withClaim```:
+
+```java
+return JWT.create()
+    .withIssuer("API Voll.med")
+    .withSubject(usuario.getLogin())
+
+    .withClaim("id", usuario.getId())
+
+    .withExpiresAt(fechaExpiracion())
+    .sign(algoritmo);
+```
+
+El método ```withClaim``` recibe dos parámetros, el primero es un String que 
+identifica el nombre del claim (propiedad almacenada en el token), y el 
+segundo la información a almacenar.
+
