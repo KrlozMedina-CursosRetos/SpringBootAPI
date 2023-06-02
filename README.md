@@ -633,3 +633,143 @@ El método ```withClaim``` recibe dos parámetros, el primero es un String que
 identifica el nombre del claim (propiedad almacenada en el token), y el 
 segundo la información a almacenar.
 
+### Para saber más: filters
+
+Filter es una de las características que componen la especificación 
+Servlets, que estandariza el manejo de solicitudes y respuestas en
+aplicaciones web en Java. Es decir, dicha función no es específica de
+Spring y, por lo tanto, puede usarse en cualquier aplicación Java.
+
+Es una característica muy útil para aislar códigos de infraestructura de
+la aplicación, como por ejemplo, seguridad, logs y auditoría, para que
+dichos códigos no se dupliquen y se mezclen con códigos relacionados con
+las reglas comerciales de la aplicación.
+
+Para crear un Filter, simplemente cree una clase e implemente la interfaz
+```Filter``` en ella (paquete jakarta.servlet). Por ejemplo:
+
+```java
+@WebFilter(urlPatterns = "/api/**")
+public class LogFilter implements Filter {
+
+    @Override
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+        System.out.println("Requisição recebida em: " + LocalDateTime.now());
+        filterChain.doFilter(servletRequest, servletResponse);
+    }
+
+}
+```
+
+El método ```doFilter``` es llamado por el servidor automáticamente, cada vez 
+que este filter tiene que ser ejecutado, y la llamada al método
+```filterChain.doFilter``` indica que los siguientes filters, si hay otros,
+pueden ser ejecutados. La anotación ```@WebFilter```, agregada a la clase,
+indica al servidor en qué solicitudes se debe llamar a este filter,
+según la URL de la solicitud.
+
+En el curso, usaremos otra forma de implementar un filter, utilizando los recursos de Spring que facilitan su implementación.
+
+### Para saber más: AuthorizeRequests deprecated
+
+En la versión final 3.0.0 de Spring Boot se realizó un cambio en Spring 
+Security, en cuanto a códigos que restringen el control de acceso. A lo
+largo de las clases, el método ```securityFilterChain(HttpSecurity http)```,
+declarado en la clase ```SecurityConfigurations```, tenía la siguiente
+estructura:
+
+```java
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    return http.csrf().disable()
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and().authorizeRequests()
+            .antMatchers(HttpMethod.POST, "/login").permitAll()
+            .anyRequest().authenticated()
+            .and().build();
+}
+```
+
+Sin embargo, desde la versión final 3.0.0 de Spring Boot, el método
+authorizeRequests() ha quedado obsoleto y debe ser reemplazado por el
+nuevo método authorizeHttpRequests(). Asimismo, el método antMatchers()
+debería ser reemplazado por el nuevo método requestMatchers():
+
+```java
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    return http.csrf().disable()
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and().authorizeHttpRequests()
+            .requestMatchers(HttpMethod.POST, "/login").permitAll()
+            .anyRequest().authenticated()
+            .and().build();
+}
+```
+
+### Para saber más: control de acceso por url
+
+En la aplicación utilizada en el curso, no tendremos diferentes perfiles
+de acceso para los usuarios. Sin embargo, esta característica se usa en
+algunas aplicaciones y podemos indicarle a Spring Security que solo los
+usuarios que tienen un perfil específico pueden acceder a ciertas URL.
+
+Por ejemplo, supongamos que en nuestra aplicación tenemos un perfil de
+acceso llamado ADMIN, y solo los usuarios con ese perfil pueden eliminar
+médicos y pacientes. Podemos indicar dicha configuración a Spring Security
+cambiando el método ```securityFilterChain```, en la clase
+```SecurityConfigurations```, de la siguiente manera:
+
+```java
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    return http.csrf().disable()
+        .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        .and().authorizeRequests()
+        .antMatchers(HttpMethod.POST, "/login").permitAll()
+        .antMatchers(HttpMethod.DELETE, "/medicos").hasRole("ADMIN")
+        .antMatchers(HttpMethod.DELETE, "/pacientes").hasRole("ADMIN")
+        .anyRequest().authenticated()
+        .and().addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
+        .build();
+}
+```
+
+Tenga en cuenta que se agregaron dos líneas al código anterior, indicando
+a Spring Security que las solicitudes de tipo ```DELETE``` de las URL
+```/médicos``` y ```/pacientes``` solo pueden ser ejecutadas por usuarios
+autenticados y cuyo perfil de acceso es ADMIN.
+
+### Para saber más: control de acceso a anotaciones
+
+Otra forma de restringir el acceso a ciertas funciones, según el perfil
+del usuario, es usar una función de Spring Security conocida como Method
+Security, que funciona con el uso de anotaciones en los métodos:
+
+```java
+@GetMapping("/{id}")
+@Secured("ROLE_ADMIN")
+public ResponseEntity detallar(@PathVariable Long id) {
+    var medico = repository.getReferenceById(id);
+    return ResponseEntity.ok(new DatosDetalladoMedico(medico));
+}
+```
+
+En el ejemplo de código anterior, el método se anotó con
+```@Secured("ROLE_ADMIN")```, de modo que sólo los usuarios con el rol ADMIN
+pueden activar solicitudes para detallar a un médico. La anotación
+```@Secured``` se puede agregar en métodos individuales o incluso en la clase,
+lo que sería el equivalente a agregarla en todos los métodos.
+
+¡Atención! Por defecto esta característica está deshabilitada en Spring
+Security, y para usarla debemos agregar la siguiente anotación en la clase
+```Securityconfigurations``` del proyecto:
+
+```
+@EnableMethodSecurity(securedEnabled = true)
+```
+
+Puede obtener más detalles sobre la función de seguridad del método en la
+documentación de Spring Security, disponible en:
+
+[Method Security](https://docs.spring.io/spring-security/reference/servlet/authorization/method-security.html)
